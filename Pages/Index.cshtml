@@ -1,0 +1,312 @@
+﻿@page
+@{}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Movies</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body style="background-size: cover;  background-image : url('/images/bg.jpg')">
+
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-warning">
+            <a class="navbar-brand" href="#">Movies</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <button class="btn btn-outline-dark" data-toggle="modal" data-target="#addMovie">Add New Movie</button>
+                    </li>
+                  
+                </ul>
+                
+            </div>
+        </nav>
+
+
+        <div class="container">
+            <div class="row" id="allMovies">
+
+
+
+            </div> 
+          
+        </div>
+    </div>
+
+
+
+
+
+
+
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+        var uri = 'api/Movies';
+
+        $(document).ready(function () {
+            // Gets all Movies
+            $.getJSON(uri)
+                .done(function (data) {
+
+                    $("#movieTemplate").tmpl(data).appendTo("#allMovies");
+                });
+        });
+
+
+
+        function getAllMovies() {
+
+               $.getJSON(uri)
+                   .done(function (data) {
+
+                       $("#allMovies").text("");
+
+                    $("#movieTemplate").tmpl(data).appendTo("#allMovies");
+                });
+
+        }
+
+        function addMovie() {
+            var _name = $('#name').val();
+            var _genres = $('#genres').val();
+            var _releasedYear = parseInt($('#releasedYear').val());
+         
+           
+
+
+            var movie = {
+                name: _name,
+                genres: _genres,
+                releasedYear: _releasedYear
+                
+            };
+
+            $.ajax({
+                type: "POST",
+                url: uri,
+                data: JSON.stringify(movie),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#result").html("Success");
+                getAllMovies();
+            }).fail(function (jqXHR, textStatus) {
+                          $("#result").html("An error occured when Adding the movie record.");
+               });
+
+
+
+
+        }
+
+
+
+
+
+        function updateMovie() {
+           var _name = $('#_name').val();
+            var _genres = $('#_genres').val();
+            var _releasedYear =  parseInt($('#_releasedYear').val());
+       
+
+
+            
+            var movie = {
+                id: parseInt($('#_id').val()),
+                name: _name,
+                genres: _genres,
+                releasedYear: _releasedYear
+               
+           
+            };
+
+            $.ajax({
+                type: "PUT",
+                url: uri+"/"+ $('#_id').val(),
+                data: JSON.stringify(movie),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#resultUpdate").html("Success");
+                getAllMovies();
+            }).fail(function (jqXHR, textStatus) {
+                          $("#resultUpdate").html("An error occured When updating Movie");
+               });;
+
+
+
+
+        }
+
+
+
+        function remove(id) {
+
+
+          var yes =  confirm("Are you sure you want to delete this Movie?");
+
+            if (yes) {
+                $.ajax({
+                    type: "DELETE",
+                    url: uri + "/" + id,
+
+                }).done(function (response) {
+
+                    getAllMovies();
+                });
+
+            }
+
+
+        }
+
+
+         
+
+
+        function getMovieForUpdate(id) {
+
+             $.ajax({
+                type: "GET",
+                url: uri+"/"+id,
+               contentType: "application/json"
+             }).done(function (response) {
+
+                  $('#_id').val(response.id);
+                 $('#_name').val(response.name) ;
+                 $('#_genres').val(response.genres);
+                 $('#_releasedYear').val(response.releasedYear);
+                
+
+              
+
+
+            });
+
+
+        }
+    </script>
+
+    
+
+    <script id="movieTemplate" type="text/x-jquery-tmpl">
+
+        <div class="col-lg-3" style="margin:10px;">
+            <div class="card card text-white bg-dark border-warning mb-3" style="width: 18rem; padding:20px">
+
+                <div class="card-body">
+                    <h5 class="card-title"> ${name}</h5>
+                    <p class="card-text">Genres :  ${genres}</p>
+                    <p class="card-text">Released : ${releasedYear}</p>
+
+                </div>
+                <span >
+                    <button class="btn btn-primary" onclick="getMovieForUpdate('${id}')" data-toggle="modal" data-target="#updateMovie">Update</button>
+                    <a href="#" class="btn btn-danger" onclick="remove('${id}')">Delete</a>
+                </span>
+            </div>
+        </div>
+    </script>
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="addMovie">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Movie</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" aria-describedby="emailHelp" placeholder="Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Genres</label>
+                            <input type="text" class="form-control" id="genres" aria-describedby="emailHelp" placeholder="Genres">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Released Year</label>
+                            <input type="number" class="form-control" id="releasedYear" aria-describedby="emailHelp" placeholder="Released Year">
+
+                        </div>
+                    
+
+                        <div class="form-group" id="result">
+
+
+                        </div>
+                        <button type="button" onclick="addMovie()" class="btn btn-primary">Add Movie</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="updateMovie">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Movie</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+
+                        <div class="form-group">
+
+                            <input type="hidden" class="form-control" id="_id" aria-describedby="emailHelp">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="_name" aria-describedby="emailHelp" placeholder="Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Genres</label>
+                            <input type="text" class="form-control" id="_genres" aria-describedby="emailHelp" placeholder="Genres">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Released Year</label>
+                            <input type="number" class="form-control" id="_releasedYear" aria-describedby="emailHelp" placeholder="Released Year">
+
+                        </div>
+                       
+
+                        <div class="form-group" id="resultUpdate">
+
+
+                        </div>
+                        <button type="button" onclick="updateMovie()" class="btn btn-primary">Update Record</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
